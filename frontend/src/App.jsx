@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Dashboard from './pages/Dashboard';
@@ -42,6 +43,24 @@ function clearAuth() {
   localStorage.removeItem('auth_email');
   localStorage.removeItem('auth_name');
   localStorage.removeItem('auth_picture');
+}
+
+function authFromUrl(url) {
+  const parsedUrl = new URL(url);
+  const params = parsedUrl.searchParams;
+  const token = params.get('token');
+  const email = params.get('email');
+
+  if (!token || !email) {
+    return null;
+  }
+
+  return {
+    token,
+    email,
+    name: params.get('name') || '',
+    picture: params.get('picture') || '',
+  };
 }
 
 
@@ -100,6 +119,36 @@ export default function App() {
     }
 
     setChecking(false);
+
+    let listener;
+    CapacitorApp.addListener('appUrlOpen', ({ url }) => {
+      try {
+        const mobileAuth = authFromUrl(url);
+
+        if (mobileAuth) {
+          storeAuth(
+            mobileAuth.token,
+            mobileAuth.email,
+            mobileAuth.name,
+            mobileAuth.picture
+          );
+          setAuth(mobileAuth);
+        } else {
+          const authError = new URL(url).searchParams.get('auth_error');
+          if (authError) {
+            window.history.replaceState({}, '', `/?auth_error=${authError}`);
+          }
+        }
+      } catch (error) {
+        console.warn('Invalid OAuth callback URL:', error);
+      }
+    }).then((handle) => {
+      listener = handle;
+    });
+
+    return () => {
+      listener?.remove();
+    };
   }, []);
 
   // Setup push notifications after authentication

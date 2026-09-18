@@ -48,6 +48,10 @@ JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+MOBILE_REDIRECT_URI = os.getenv(
+    "MOBILE_REDIRECT_URI",
+    "com.lokesh.aiemailagent://auth/callback"
+)
 
 GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token"
@@ -127,7 +131,7 @@ def get_current_user(
 # ============================================================
 
 @router.get("/api/auth/google/login")
-async def google_login():
+async def google_login(platform: str = "web"):
     """
     Redirect user to Google OAuth consent screen.
 
@@ -150,6 +154,7 @@ async def google_login():
         "scope": " ".join(SCOPES),
         "access_type": "offline",
         "prompt": "consent",
+        "state": "android" if platform == "android" else "web",
     }
 
     auth_url = f"{GOOGLE_AUTH_URL}?{urlencode(params)}"
@@ -162,7 +167,11 @@ async def google_login():
 # ============================================================
 
 @router.get("/api/auth/google/callback")
-async def google_callback(code: str = None, error: str = None):
+async def google_callback(
+    code: str = None,
+    error: str = None,
+    state: str = "web"
+):
     """
     Google redirects here after user authorizes.
 
@@ -173,11 +182,25 @@ async def google_callback(code: str = None, error: str = None):
 
     if error:
         logger.warning("Google OAuth error: %s", error)
+        if state == "android":
+            return RedirectResponse(
+                url=(
+                    f"{MOBILE_REDIRECT_URI}?"
+                    f"{urlencode({'auth_error': error})}"
+                )
+            )
         return RedirectResponse(
             url=f"{FRONTEND_URL}?auth_error={error}"
         )
 
     if not code:
+        if state == "android":
+            return RedirectResponse(
+                url=(
+                    f"{MOBILE_REDIRECT_URI}?"
+                    f"{urlencode({'auth_error': 'no_code'})}"
+                )
+            )
         return RedirectResponse(
             url=f"{FRONTEND_URL}?auth_error=no_code"
         )
@@ -303,6 +326,15 @@ async def google_callback(code: str = None, error: str = None):
         f"&name={name}"
         f"&picture={picture}"
     )
+
+    if state == "android":
+        mobile_params = urlencode({
+            "token": jwt_token,
+            "email": email,
+            "name": name,
+            "picture": picture,
+        })
+        redirect_url = f"{MOBILE_REDIRECT_URI}?{mobile_params}"
 
     return RedirectResponse(url=redirect_url)
 

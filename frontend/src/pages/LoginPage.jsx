@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { Browser } from '@capacitor/browser';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = import.meta.env.VITE_API_URL || 'https://ai-email-agent-duvi.onrender.com';
 
 export default function LoginPage() {
   const [loading, setLoading] = useState(false);
@@ -20,8 +22,19 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     setLoading(true);
     setError('');
-    // Redirect to backend Google OAuth endpoint
-    window.location.href = `${API_URL}/api/auth/google/login`;
+
+    const isAndroid = Capacitor.getPlatform() === 'android';
+    const loginUrl = `${API_URL}/api/auth/google/login?platform=${isAndroid ? 'android' : 'web'}`;
+
+    if (isAndroid) {
+      Browser.open({ url: loginUrl }).catch(() => {
+        setLoading(false);
+        setError('Unable to open Google sign-in.');
+      });
+      return;
+    }
+
+    window.location.href = loginUrl;
   };
 
   return (
