@@ -1,0 +1,47 @@
+# Environment
+.env
+!.env.example
+
+# OAuth credentials
+credentials.json
+token.json
+token_old.json
+firebase-service-account.json
+
+# Python
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual env
+venv/
+.venv/
+env/
+
+# Node
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
