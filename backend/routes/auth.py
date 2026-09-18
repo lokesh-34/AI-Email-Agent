@@ -47,7 +47,10 @@ JWT_SECRET = os.getenv("JWT_SECRET", "email-copilot-secret-key-change-me")
 JWT_EXPIRY_HOURS = int(os.getenv("JWT_EXPIRY_HOURS", "24"))
 
 FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
-BACKEND_URL = os.getenv("BACKEND_URL", "http://localhost:8000")
+BACKEND_URL = os.getenv(
+    "BACKEND_URL",
+    "https://ai-email-agent-duvi.onrender.com"
+)
 MOBILE_REDIRECT_URI = os.getenv(
     "MOBILE_REDIRECT_URI",
     "com.lokesh.aiemailagent://auth/callback"
