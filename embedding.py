@@ -1,15 +1,20 @@
-from sentence_transformers import SentenceTransformer
+model = None
 
 
-# Load the embedding model
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+def _get_model():
+    global model
+
+    if model is None:
+        from sentence_transformers import SentenceTransformer
+
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+
+    return model
 
 
 def create_embedding(text):
 
-    embedding = model.encode(
+    embedding = _get_model().encode(
         text,
         normalize_embeddings=True
     )
